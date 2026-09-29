@@ -145,7 +145,7 @@ export const updatePokemon = async (req, res) => {
     if (evolution_trade === undefined) res.json({ error: `body request error`, message: `you have to insert if the pokemon evolve with the trade` });
     if (evolution_friendship === undefined) res.json({ error: `body request error`, message: `you have to insert if the pokemon evolve with the friendship` });
 
-    
+
     const id = req.params.id
 
     const sql = `
@@ -191,4 +191,13 @@ export const updatePokemon = async (req, res) => {
 
 };
 
-export const deletePokemon = async (req, res) => { };
+export const deletePokemon = async (req, res) => {
+
+    const id = req.params.id
+    const sql = `DELETE FROM pokemon WHERE id = ?`
+
+    await connection.query(sql, id);
+
+    res.sendStatus(204);
+
+};
