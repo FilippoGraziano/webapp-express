@@ -1,4 +1,5 @@
 import { connection } from '../data/db.js';
+import { notFoundError } from '../errorMiddleware.js';
 
 export const getPokemon = async (req, res) => {
 
@@ -6,7 +7,7 @@ export const getPokemon = async (req, res) => {
 
     const [result] = await connection.query(sql);
 
-    if (result.length === 0) res.status(404).json({ error: `not found`, message: `list of pokemon not found` })
+    if (result.length === 0) notFoundError(req, res);
 
     res.send(result);
 
@@ -14,12 +15,14 @@ export const getPokemon = async (req, res) => {
 
 export const getPokemonById = async (req, res) => {
 
-    const id = req.params.id;
+    const id = Number(req.params.id);
+    if (isNaN(id)) res.json({ error: `id error`, message: `The id should be a number` });
+
     const sql = `SELECT * FROM pokemon WHERE id = ?`;
 
     const [result] = await connection.query(sql, id);
 
-    if (result.length === 0) res.status(404).json({ error: `not found`, message: `pokemon with this path (${req.path}) not found` })
+    if (result.length === 0) notFoundError(req, res);
 
     res.send(result);
 
@@ -32,7 +35,7 @@ export const getPokemonByName = async (req, res) => {
 
     const [result] = await connection.query(sql, name);
 
-    if (result.length === 0) res.status(404).json({ error: `not found`, message: `pokemon with this path (${req.path}) not found` })
+    if (result.length === 0) notFoundError(req, res);
 
     res.send(result);
 
@@ -114,6 +117,9 @@ export const createPokemon = async (req, res) => {
 
 export const updatePokemon = async (req, res) => {
 
+    const id = Number(req.params.id);
+    if (isNaN(id)) res.json({ error: `id error`, message: `The id should be a number` });
+
     const {
         name,
         height,
@@ -144,9 +150,6 @@ export const updatePokemon = async (req, res) => {
     if (evolution_stone === undefined) res.json({ error: `body request error`, message: `you have to insert if the pokemon evolve with the stone` });
     if (evolution_trade === undefined) res.json({ error: `body request error`, message: `you have to insert if the pokemon evolve with the trade` });
     if (evolution_friendship === undefined) res.json({ error: `body request error`, message: `you have to insert if the pokemon evolve with the friendship` });
-
-
-    const id = req.params.id
 
     const sql = `
         UPDATE pokemon
@@ -185,7 +188,7 @@ export const updatePokemon = async (req, res) => {
         id
     ]);
 
-    if (result.affectedRows === 0) res.status(404).json({ error: `not found`, message: `pokemon with this path (${req.path}) not found` })
+    if (result.affectedRows === 0) notFoundError(req, res);
 
     res.sendStatus(204);
 
@@ -193,7 +196,9 @@ export const updatePokemon = async (req, res) => {
 
 export const deletePokemon = async (req, res) => {
 
-    const id = req.params.id
+    const id = Number(req.params.id);
+    if (isNaN(id)) res.json({ error: `id error`, message: `The id should be a number` });
+
     const sql = `DELETE FROM pokemon WHERE id = ?`
 
     await connection.query(sql, id);
