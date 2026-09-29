@@ -1,9 +1,10 @@
 import express from 'express';
-import { routerPokemon } from './resources/pokemonRouter.js';
+import { routerPokemon } from './resources/pokemonRouters.js';
 
 const app = express();
 const port = 3000;
 
+app.use(express.json());
 app.use(`/pokemon`, routerPokemon);
 
 app.listen(port, () => {
