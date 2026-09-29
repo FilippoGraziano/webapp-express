@@ -10,6 +10,6 @@ routerPokemon.get(`/name/:name`, getPokemonByName);
 
 routerPokemon.post(`/`, createPokemon);
 
-routerPokemon.put(`/:id`, updatePokemon);
+routerPokemon.put(`/id/:id`, updatePokemon);
 
-routerPokemon.delete(`/:id`, deletePokemon);
+routerPokemon.delete(`/id/:id`, deletePokemon);
