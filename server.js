@@ -2,7 +2,7 @@ import express from 'express';
 import { routerPokemon } from './resources/pokemonRouters.js';
 
 const app = express();
-const port = 3000;
+const port = process.env.SERVER_PORT;
 
 app.use(express.json());
 
