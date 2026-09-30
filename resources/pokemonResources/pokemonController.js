@@ -18,13 +18,40 @@ export const getPokemonById = async (req, res) => {
     const id = Number(req.params.id);
     if (isNaN(id)) res.json({ error: `id error`, message: `The id should be a number` });
 
-    const sql = `SELECT * FROM pokemon WHERE id = ?`;
+    const sqlPokemon = `SELECT * FROM pokemon WHERE id = ?`;
+    const sqlType = `
+        SELECT
+            t.type
+        FROM types t
+        JOIN pokemon_type pt
+        ON pt.type_id = t.id
+        WHERE pokemon_id = ?
+    `
+    const sqlMoves = `
+        SELECT
+            m.name,
+            m.attack_type,
+            m.damage,
+            m.accuracy,
+            pm.learning_level,
+            m.mt,
+            m.mn
+        FROM moves m
+        JOIN pokemon_move pm
+        ON pm.move_id = m.id
+        WHERE pokemon_id = ?
+    `
 
-    const [result] = await connection.query(sql, id);
+    const [[resultPokemon]] = await connection.query(sqlPokemon, id);
+    if (resultPokemon.length === 0) notFoundError(req, res, `pokemon`);
 
-    if (result.length === 0) notFoundError(req, res, `pokemon`);
+    const [resultType] = await connection.query(sqlType, id);
+    const [resultMoves] = await connection.query(sqlMoves, id);
 
-    res.send(result);
+    resultPokemon.types = resultType.map(type => type.type)
+    resultPokemon.moves = resultMoves
+
+    res.send(resultPokemon);
 
 };
 
