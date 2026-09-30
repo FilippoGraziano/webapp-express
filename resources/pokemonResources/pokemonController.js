@@ -27,6 +27,18 @@ export const getPokemonById = async (req, res) => {
         ON pt.type_id = t.id
         WHERE pokemon_id = ?
     `
+    const sqlAbilities = `
+        SELECT
+            a.name,
+            a.effect,
+            pa.primary_ability,
+            pa.secondary_ability,
+            pa.special_ability
+        FROM abilities a
+        JOIN pokemon_ability pa
+        ON pa.ability_id = a.id
+        WHERE pokemon_id = ?
+    `
     const sqlMoves = `
         SELECT
             m.name,
@@ -51,10 +63,12 @@ export const getPokemonById = async (req, res) => {
 
     const [resultType] = await connection.query(sqlType, id);
     const [resultMoves] = await connection.query(sqlMoves, id);
+    const [resultAbilities] = await connection.query(sqlAbilities, id);
 
-    resultPokemon.types = resultType.map(type => type.type)
-    resultPokemon.moves = resultMoves
-
+    resultPokemon.abilities = resultAbilities.map(ability => Object.fromEntries(Object.entries(ability).filter(([_, value]) => value !== 0)) );
+    resultPokemon.types = resultType.map(type => type.type);
+    resultPokemon.moves = resultMoves.map(move => Object.fromEntries(Object.entries(move).filter(([_, value]) => value !== null)) );
+    
     res.send(resultPokemon);
 
 };
