@@ -3,7 +3,23 @@ import { notFoundError } from '../../errorMiddleware.js';
 
 export const getMoves = async (req, res) => {
 
-    const sql = `SELECT * FROM moves`;
+    const sql = `
+        SELECT 
+            m.id,
+            m.name,
+            t.type,
+            m.effect,
+            m.attack_type,
+            m.damage,
+            m.accuracy,
+            m.mt,
+            m.mn
+        FROM moves m
+        JOIN types t
+        ON t.id = m.type_id
+        ORDER BY m.id
+
+    `;
 
     const [result] = await connection.query(sql);
 
@@ -18,7 +34,22 @@ export const getMovesById = async (req, res) => {
     const id = Number(req.params.id);
     if (isNaN(id)) res.json({ error: `id error`, message: `The id should be a number` });
 
-    const sql = `SELECT * FROM moves WHERE id = ?`;
+    const sql = `
+        SELECT 
+            m.id,
+            m.name,
+            t.type,
+            m.effect,
+            m.attack_type,
+            m.damage,
+            m.accuracy,
+            m.mt,
+            m.mn
+        FROM moves m
+        JOIN types t
+        ON t.id = m.type_id
+        WHERE m.id = ?
+    `;
 
     const [result] = await connection.query(sql, id);
 
@@ -31,7 +62,22 @@ export const getMovesById = async (req, res) => {
 export const getMovesByName = async (req, res) => {
 
     const name = req.params.name;
-    const sql = `SELECT * FROM moves WHERE type = ?`;
+    const sql = `
+        SELECT 
+            m.id,
+            m.name,
+            t.type,
+            m.effect,
+            m.attack_type,
+            m.damage,
+            m.accuracy,
+            m.mt,
+            m.mn
+        FROM moves m
+        JOIN types t
+        ON t.id = m.type_id
+        WHERE m.name = ?
+    `;
 
     const [result] = await connection.query(sql, name);
 
