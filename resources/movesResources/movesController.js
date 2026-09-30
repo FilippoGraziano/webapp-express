@@ -3,7 +3,7 @@ import { notFoundError } from '../../errorMiddleware.js';
 
 export const getMoves = async (req, res) => {
 
-    const sql = `SELECT * FROM moves ORDER BY id`;
+    const sql = `SELECT * FROM moves`;
 
     const [result] = await connection.query(sql);
 
@@ -111,7 +111,7 @@ export const updateMoves = async (req, res) => {
     `
     const [result] = await connection.query(sql, [type_id, name, effect, attack_type, damage, accuracy, mt, mn, id]);
 
-    if (result.affectedRows === 0) notFoundError(req, res, `type`);
+    if (result.affectedRows === 0) notFoundError(req, res, `moves`);
 
     res.sendStatus(204);
 
