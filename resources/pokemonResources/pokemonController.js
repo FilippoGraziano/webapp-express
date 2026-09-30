@@ -30,6 +30,8 @@ export const getPokemonById = async (req, res) => {
     const sqlMoves = `
         SELECT
             m.name,
+            t.type,
+            m.effect,
             m.attack_type,
             m.damage,
             m.accuracy,
@@ -39,6 +41,8 @@ export const getPokemonById = async (req, res) => {
         FROM moves m
         JOIN pokemon_move pm
         ON pm.move_id = m.id
+        JOIN types t
+        ON t.id = m.type_id
         WHERE pokemon_id = ?
     `
 
