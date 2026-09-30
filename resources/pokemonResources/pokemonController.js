@@ -1,5 +1,5 @@
-import { connection } from '../data/db.js';
-import { notFoundError } from '../errorMiddleware.js';
+import { connection } from '../../data/db.js';
+import { notFoundError } from '../../errorMiddleware.js';
 
 export const getPokemon = async (req, res) => {
 
@@ -7,7 +7,7 @@ export const getPokemon = async (req, res) => {
 
     const [result] = await connection.query(sql);
 
-    if (result.length === 0) notFoundError(req, res);
+    if (result.length === 0) notFoundError(req, res, `pokemon`);
 
     res.send(result);
 
@@ -22,7 +22,7 @@ export const getPokemonById = async (req, res) => {
 
     const [result] = await connection.query(sql, id);
 
-    if (result.length === 0) notFoundError(req, res);
+    if (result.length === 0) notFoundError(req, res, `pokemon`);
 
     res.send(result);
 
@@ -35,7 +35,7 @@ export const getPokemonByName = async (req, res) => {
 
     const [result] = await connection.query(sql, name);
 
-    if (result.length === 0) notFoundError(req, res);
+    if (result.length === 0) notFoundError(req, res, `pokemon`);
 
     res.send(result);
 
@@ -188,7 +188,7 @@ export const updatePokemon = async (req, res) => {
         id
     ]);
 
-    if (result.affectedRows === 0) notFoundError(req, res);
+    if (result.affectedRows === 0) notFoundError(req, res, `pokemon`);
 
     res.sendStatus(204);
 
