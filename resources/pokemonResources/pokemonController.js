@@ -120,8 +120,7 @@ export const getPokemonByName = async (req, res) => {
     `
     const sqlAbilities = `
         SELECT
-            a.name,
-            a.effect,
+            a.*,
             pa.primary_ability,
             pa.secondary_ability,
             pa.special_ability
@@ -134,6 +133,7 @@ export const getPokemonByName = async (req, res) => {
     `
     const sqlMoves = `
         SELECT
+            m.id,
             m.name,
             t.type,
             m.effect,
