@@ -1,5 +1,5 @@
 import { connection } from '../../data/db.js';
-import { notFoundError } from '../../errorMiddleware.js';
+import { notFoundError } from '../../errorFunctions.js';
 
 export const getTypes = async (req, res) => {
 
@@ -7,7 +7,7 @@ export const getTypes = async (req, res) => {
 
     const [result] = await connection.query(sql);
 
-    if (result.length === 0) notFoundError(req, res, `type`);
+    if (result.length === 0) return notFoundError(req, res, `type`);
 
     res.send(result);
 
@@ -22,7 +22,7 @@ export const getTypesById = async (req, res) => {
 
     const [result] = await connection.query(sql, id);
 
-    if (result.length === 0) notFoundError(req, res, `type`);
+    if (result.length === 0) return notFoundError(req, res, `type`);
 
     res.send(result);
 
@@ -35,7 +35,7 @@ export const getTypesByName = async (req, res) => {
 
     const [result] = await connection.query(sql, name);
 
-    if (result.length === 0) notFoundError(req, res, `type`);
+    if (result.length === 0) return notFoundError(req, res, `type`);
 
     res.send(result);
 
@@ -73,7 +73,7 @@ export const updateTypes = async (req, res) => {
     `
     const [result] = await connection.query(sql, [type, id]);
 
-    if (result.affectedRows === 0) notFoundError(req, res, `type`);
+    if (result.affectedRows === 0) return notFoundError(req, res, `type`);
 
     res.sendStatus(204);
 

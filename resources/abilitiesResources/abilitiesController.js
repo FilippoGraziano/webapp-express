@@ -1,5 +1,5 @@
 import { connection } from '../../data/db.js';
-import { notFoundError } from '../../errorMiddleware.js';
+import { notFoundError } from '../../errorFunctions.js';
 
 export const getAbilities = async (req, res) => {
 
@@ -7,7 +7,7 @@ export const getAbilities = async (req, res) => {
 
     const [result] = await connection.query(sql);
 
-    if (result.length === 0) notFoundError(req, res, `ability`);
+    if (result.length === 0) return notFoundError(req, res, `ability`);
 
     res.send(result);
 
@@ -22,7 +22,7 @@ export const getAbilitiesById = async (req, res) => {
 
     const [result] = await connection.query(sql, id);
 
-    if (result.length === 0) notFoundError(req, res, `ability`);
+    if (result.length === 0) return notFoundError(req, res, `ability`);
 
     res.send(result);
 
@@ -35,7 +35,7 @@ export const getAbilitiesByName = async (req, res) => {
 
     const [result] = await connection.query(sql, name);
 
-    if (result.length === 0) notFoundError(req, res, `ability`);
+    if (result.length === 0) return notFoundError(req, res, `ability`);
 
     res.send(result);
 
@@ -77,7 +77,7 @@ export const updateAbilities = async (req, res) => {
     `
     const [result] = await connection.query(sql, [name, effect, id]);
 
-    if (result.affectedRows === 0) notFoundError(req, res, `abilities`);
+    if (result.affectedRows === 0) return notFoundError(req, res, `abilities`);
 
     res.sendStatus(204);
 
