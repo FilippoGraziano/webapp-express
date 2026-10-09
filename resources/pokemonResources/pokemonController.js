@@ -89,7 +89,7 @@ export const getPokemonById = async (req, res) => {
     `
 
     const [[resultPokemon]] = await connection.query(sqlPokemon, id);
-    if (resultPokemon.length === 0) notFoundError(req, res, `pokemon`);
+    if (resultPokemon === undefined) return notFoundError(req, res, `pokemon`);
 
     const [resultType] = await connection.query(sqlType, id);
     const [[resultEvolution]] = await connection.query(sqlEvolution, id);
@@ -188,7 +188,7 @@ export const getPokemonByName = async (req, res) => {
     `
 
     const [[resultPokemon]] = await connection.query(sql, name);
-    if (resultPokemon.length === 0) notFoundError(req, res, `pokemon`);
+    if (resultPokemon === undefined) return notFoundError(req, res, `pokemon`);
 
     const [resultType] = await connection.query(sqlType, name);
     const [[resultEvolution]] = await connection.query(sqlEvolution, name);
@@ -212,52 +212,36 @@ export const createPokemon = async (req, res) => {
         name,
         height,
         weight,
-        n_regional,
         n_international,
         generation,
         description,
         male,
         female,
-        image,
-        evolution_level,
-        evolution_stone,
-        evolution_trade,
-        evolution_friendship
+        image
     } = req.body
     if (name === undefined) res.json({ error: `body request error`, message: `you have to insert the name of the pokemon` });
     if (height === undefined) res.json({ error: `body request error`, message: `you have to insert the height of the pokemon` });
     if (weight === undefined) res.json({ error: `body request error`, message: `you have to insert the wheigth of the pokemon` });
-    if (n_regional === undefined) res.json({ error: `body request error`, message: `you have to insert the regional number of the pokemon` });
     if (n_international === undefined) res.json({ error: `body request error`, message: `you have to insert the international number of the pokemon` });
     if (generation === undefined) res.json({ error: `body request error`, message: `you have to insert the generation of the pokemon` });
     if (description === undefined) res.json({ error: `body request error`, message: `you have to insert the description of the pokemon` });
     if (male === undefined) res.json({ error: `body request error`, message: `you have to insert the chance of found a male species of the pokemon` });
     if (female === undefined) res.json({ error: `body request error`, message: `you have to insert the chance of found a female species of the pokemon` });
     if (image === undefined) res.json({ error: `body request error`, message: `you have to insert the image of the pokemon` });
-    if (evolution_level === undefined) res.json({ error: `body request error`, message: `you have to insert the level for the evolution of the pokemon` });
-    if (evolution_stone === undefined) res.json({ error: `body request error`, message: `you have to insert if the pokemon evolve with the stone` });
-    if (evolution_trade === undefined) res.json({ error: `body request error`, message: `you have to insert if the pokemon evolve with the trade` });
-    if (evolution_friendship === undefined) res.json({ error: `body request error`, message: `you have to insert if the pokemon evolve with the friendship` });
-
 
     const sql = `
-        INSERT INTO pokemon ( name, height, weight, n_regional, n_international, generation, description, male, female, image, evolution_level, evolution_stone, evolution_trade, evolution_friendship ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
+        INSERT INTO pokemon ( name, height, weight, n_international, generation, description, male, female, image ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )
     `
     const [result] = await connection.query(sql, [
         name,
         height,
         weight,
-        n_regional,
         n_international,
         generation,
         description,
         male,
         female,
-        image,
-        evolution_level,
-        evolution_stone,
-        evolution_trade,
-        evolution_friendship
+        image
     ]);
 
     res.json({
@@ -265,17 +249,12 @@ export const createPokemon = async (req, res) => {
         name,
         height,
         weight,
-        n_regional,
         n_international,
         generation,
         description,
         male,
         female,
         image,
-        evolution_level,
-        evolution_stone,
-        evolution_trade,
-        evolution_friendship
     })
 
 };
@@ -289,49 +268,33 @@ export const updatePokemon = async (req, res) => {
         name,
         height,
         weight,
-        n_regional,
         n_international,
         generation,
         description,
         male,
         female,
-        image,
-        evolution_level,
-        evolution_stone,
-        evolution_trade,
-        evolution_friendship
+        image
     } = req.body
     if (name === undefined) res.json({ error: `body request error`, message: `you have to insert the name of the pokemon` });
     if (height === undefined) res.json({ error: `body request error`, message: `you have to insert the height of the pokemon` });
     if (weight === undefined) res.json({ error: `body request error`, message: `you have to insert the wheigth of the pokemon` });
-    if (n_regional === undefined) res.json({ error: `body request error`, message: `you have to insert the regional number of the pokemon` });
     if (n_international === undefined) res.json({ error: `body request error`, message: `you have to insert the international number of the pokemon` });
     if (generation === undefined) res.json({ error: `body request error`, message: `you have to insert the generation of the pokemon` });
     if (description === undefined) res.json({ error: `body request error`, message: `you have to insert the description of the pokemon` });
     if (male === undefined) res.json({ error: `body request error`, message: `you have to insert the chance of found a male species of the pokemon` });
     if (female === undefined) res.json({ error: `body request error`, message: `you have to insert the chance of found a female species of the pokemon` });
     if (image === undefined) res.json({ error: `body request error`, message: `you have to insert the image of the pokemon` });
-    if (evolution_level === undefined) res.json({ error: `body request error`, message: `you have to insert the level for the evolution of the pokemon` });
-    if (evolution_stone === undefined) res.json({ error: `body request error`, message: `you have to insert if the pokemon evolve with the stone` });
-    if (evolution_trade === undefined) res.json({ error: `body request error`, message: `you have to insert if the pokemon evolve with the trade` });
-    if (evolution_friendship === undefined) res.json({ error: `body request error`, message: `you have to insert if the pokemon evolve with the friendship` });
-
     const sql = `
         UPDATE pokemon
         SET name = ?,
             height = ?,
             weight = ?,
-            n_regional = ?,
             n_international = ?,
             generation = ?,
             description = ?,
             male = ?,
             female = ?,
-            image = ?,
-            evolution_level = ?,
-            evolution_stone = ?,
-            evolution_trade = ?,
-            evolution_friendship = ?
+            image = ?
         WHERE id = ?
     `
 
@@ -339,17 +302,12 @@ export const updatePokemon = async (req, res) => {
         name,
         height,
         weight,
-        n_regional,
         n_international,
         generation,
         description,
         male,
         female,
         image,
-        evolution_level,
-        evolution_stone,
-        evolution_trade,
-        evolution_friendship,
         id
     ]);
 
