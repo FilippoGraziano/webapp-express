@@ -278,7 +278,7 @@ export const createPokemonEvolution = async (req, res) => {
     if (resultEvoPok.length === 0) return res.json({ error: `not found`, message: `pokemon with this id (${evo_pokemon_id}) doesn't exist` });
 
     const sql = `INSERT INTO evolutions ( pokemon_id, evo_type, item_id, evo_method, evo_pokemon_id ) values ( ?, ?, ?, ?, ?)`
-    const [result] = await connection.query(sql, [ pokemonId, evo_type, item_id, evo_method, evo_pokemon_id ] )
+    const [result] = await connection.query(sql, [pokemonId, evo_type, item_id, evo_method, evo_pokemon_id])
 
     res.json({
         id: result.insertId,
@@ -290,7 +290,34 @@ export const createPokemonEvolution = async (req, res) => {
     })
 };
 
-export const createPokemonStats = async (req, res) => { };
+export const createPokemonStats = async (req, res) => {
+
+    const pokemonId = req.params.id;
+
+    const { tot_stats, ps, attack, defense, sp_attack, sp_defense, speed } = req.body;
+    if (tot_stats === undefined) return res.json({ error: `body request error`, message: `you have to insert the total stats of pokemon` });
+    if (ps === undefined) return res.json({ error: `body request error`, message: `you have to insert the ps of pokemon` });
+    if (attack === undefined) return res.json({ error: `body request error`, message: `you have to insert the attack of pokemon` });
+    if (defense === undefined) return res.json({ error: `body request error`, message: `you have to insert the defense of pokemon` });
+    if (sp_attack === undefined) return res.json({ error: `body request error`, message: `you have to insert the special attack of pokemon` });
+    if (sp_defense === undefined) return res.json({ error: `body request error`, message: `you have to insert the special defense of pokemon` });
+    if (speed === undefined) return res.json({ error: `body request error`, message: `you have to insert the speed of pokemon` });
+
+    const sql = `INSERT INTO stats ( pokemon_id, tot_stats, ps, attack, defense, sp_attack, sp_defense, speed) values (?, ?, ?, ?, ?, ?, ?, ?)`
+    const [result] = await connection.query(sql, [ pokemonId, tot_stats, ps, attack, defense, sp_attack, sp_defense, speed ])
+
+    res.json({
+        id: result.insertId,
+        pokemonId,
+        tot_stats,
+        ps,
+        attack,
+        defense,
+        sp_attack,
+        sp_defense,
+        speed
+    })
+};
 
 export const createPokemonAbilities = async (req, res) => { };
 
