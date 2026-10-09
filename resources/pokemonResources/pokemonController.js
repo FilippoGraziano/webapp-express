@@ -402,16 +402,16 @@ export const createPokemonTypes = async (req, res) => {
     const pokemonId = req.params.id;
 
     const { type_id } = req.body;
-    if (type_id === undefined) return res.json({ error: `bad request`, message: `You have to insert the type of pokemon`});
-    
+    if (type_id === undefined) return res.json({ error: `bad request`, message: `You have to insert the type of pokemon` });
+
     const sqlType = `SELECT * FROM types WHERE id = ?`;
     const [resultType] = await connection.query(sqlType, type_id);
-    if (resultType.length === 0) return res.json({ error: `not found`, message: `Type with this id (${type_id}) doesn't exists`});
+    if (resultType.length === 0) return res.json({ error: `not found`, message: `Type with this id (${type_id}) doesn't exists` });
 
     const sqlControll = `SELECT * FROM pokemon_type WHERE pokemon_id = ?`;
     const [resultControll] = await connection.query(sqlControll, pokemonId);
-    if (resultControll.length === 1 && type_id === resultControll[0].type_id) return res.json({ error: `bad request`, message: `The pokemon already has this type`});
-    if (resultControll.length === 2) return res.json({ error: `bad request`, message: `The pokemon can't have more than 2 types`});
+    if (resultControll.length === 1 && type_id === resultControll[0].type_id) return res.json({ error: `bad request`, message: `The pokemon already has this type` });
+    if (resultControll.length === 2) return res.json({ error: `bad request`, message: `The pokemon can't have more than 2 types` });
 
     const sql = `INSERT INTO pokemon_type (pokemon_id, type_id) values (?, ?)`;
     await connection.query(sql, [pokemonId, type_id]);
@@ -422,7 +422,43 @@ export const createPokemonTypes = async (req, res) => {
     });
 };
 
-export const createPokemonMoves = async (req, res) => { };
+export const createPokemonMoves = async (req, res) => {
+
+    const pokemonId = req.params.id;
+
+    const { move_id, learning_gen, learning_level, learning_egg, learning_move_tutor, learning_mt, learning_mn } = req.body;
+    if (move_id === undefined) return res.json({ error: `bad request`, message: `You have to insert the move id` });
+    if (learning_gen === undefined) return res.json({ error: `bad request`, message: `You have to insert learning gen` });
+    if (learning_level !== undefined) {
+        if (isNaN(learning_level) || learning_level === ``) return res.json({ error: `bad request`, message: `The level should be a number` });
+    }
+    if (learning_egg === undefined) return res.json({ error: `bad request`, message: `Does it learn it from egg?` });
+    if (learning_move_tutor === undefined) return res.json({ error: `bad request`, message: `Does it learn it from move tutor?` });
+    if (learning_mt === undefined) return res.json({ error: `bad request`, message: `Does it learn it from MT?` });
+    if (learning_mn === undefined) return res.json({ error: `bad request`, message: `Does it learn it from MN?` });
+
+    const sqlMove = `SELECT * FROM moves WHERE id = ?`;
+    const [resultMove] = await connection.query(sqlMove, move_id);
+    if (resultMove.length === 0) return res.json({ error: `not found`, message: `Move with this id (${move_id}) doesn't exists` });
+    if (learning_mt === true && resultMove[0].mt === 0) return res.json({ error: `bad request`, message: `This move isn't an MT` });
+    if (learning_mn === true && resultMove[0].mn === 0) return res.json({ error: `bad request`, message: `This move isn't an MN` });
+    if (learning_mn === false && resultMove[0].mn === 1) return res.json({ error: `bad request`, message: `This move can be learn it only with MN` });
+
+    const sql = `INSERT INTO pokemon_move (move_id, pokemon_id, learning_gen, learning_level, learning_egg, learning_move_tutor, learning_mt, learning_mn) values (?, ?, ?, ?, ?, ?, ?, ?)`;
+    await connection.query(sql, [move_id, pokemonId, learning_gen, learning_level, learning_egg, learning_move_tutor, learning_mt, learning_mn]);
+    
+    res.json({
+        move_id,
+        pokemonId,
+        learning_gen,
+        learning_level,
+        learning_egg,
+        learning_move_tutor,
+        learning_mt,
+        learning_mn
+    })
+
+};
 
 export const updatePokemon = async (req, res) => {
 
