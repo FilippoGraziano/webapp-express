@@ -259,6 +259,45 @@ export const createPokemon = async (req, res) => {
 
 };
 
+export const createPokemonEvolution = async (req, res) => {
+
+    const pokemonId = req.params.id;
+
+    const { evo_type, item_id, evo_method, evo_pokemon_id } = req.body;
+    if (evo_type === undefined) return res.json({ error: `body request error`, message: `you have to insert the type of evolution` });
+    if (evo_method === undefined) return res.json({ error: `body request error`, message: `you have to insert the method of evolution` });
+    if (evo_pokemon_id === undefined) return res.json({ error: `body request error`, message: `you have to insert the evolved pokemon ` });
+    if (item_id !== undefined) {
+        const sqlItem = ` SELECT * FROM items WHERE id = ? `;
+        const [resultItem] = await connection.query(sqlItem, item_id);
+        if (resultItem.length === 0) return res.json({ error: `not found`, message: `item with this id (${item_id}) doesn't exist` });
+    }
+
+    const sqlEvoPok = ` SELECT * FROM pokemon WHERE id = ? `;
+    const [resultEvoPok] = await connection.query(sqlEvoPok, evo_pokemon_id);
+    if (resultEvoPok.length === 0) return res.json({ error: `not found`, message: `pokemon with this id (${evo_pokemon_id}) doesn't exist` });
+
+    const sql = `INSERT INTO evolutions ( pokemon_id, evo_type, item_id, evo_method, evo_pokemon_id ) values ( ?, ?, ?, ?, ?)`
+    const [result] = await connection.query(sql, [ pokemonId, evo_type, item_id, evo_method, evo_pokemon_id ] )
+
+    res.json({
+        id: result.insertId,
+        pokemonId,
+        evo_type,
+        item_id,
+        evo_method,
+        evo_pokemon_id
+    })
+};
+
+export const createPokemonStats = async (req, res) => { };
+
+export const createPokemonAbilities = async (req, res) => { };
+
+export const createPokemonTypes = async (req, res) => { };
+
+export const createPokemonMoves = async (req, res) => { };
+
 export const updatePokemon = async (req, res) => {
 
     const id = Number(req.params.id);
