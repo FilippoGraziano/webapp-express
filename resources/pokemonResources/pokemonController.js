@@ -397,7 +397,30 @@ export const createPokemonAbilities = async (req, res) => {
     })
 };
 
-export const createPokemonTypes = async (req, res) => { };
+export const createPokemonTypes = async (req, res) => {
+
+    const pokemonId = req.params.id;
+
+    const { type_id } = req.body;
+    if (type_id === undefined) return res.json({ error: `bad request`, message: `You have to insert the type of pokemon`});
+    
+    const sqlType = `SELECT * FROM types WHERE id = ?`;
+    const [resultType] = await connection.query(sqlType, type_id);
+    if (resultType.length === 0) return res.json({ error: `not found`, message: `Type with this id (${type_id}) doesn't exists`});
+
+    const sqlControll = `SELECT * FROM pokemon_type WHERE pokemon_id = ?`;
+    const [resultControll] = await connection.query(sqlControll, pokemonId);
+    if (resultControll.length === 1 && type_id === resultControll[0].type_id) return res.json({ error: `bad request`, message: `The pokemon already has this type`});
+    if (resultControll.length === 2) return res.json({ error: `bad request`, message: `The pokemon can't have more than 2 types`});
+
+    const sql = `INSERT INTO pokemon_type (pokemon_id, type_id) values (?, ?)`;
+    await connection.query(sql, [pokemonId, type_id]);
+
+    res.json({
+        pokemonId,
+        type_id
+    });
+};
 
 export const createPokemonMoves = async (req, res) => { };
 
