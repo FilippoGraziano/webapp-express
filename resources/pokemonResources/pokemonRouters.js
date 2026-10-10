@@ -1,17 +1,6 @@
 import express from "express";
-import { createPokemon, 
-        createPokemonAbilities, 
-        createPokemonEvolution, 
-        createPokemonMoves, 
-        createPokemonStats, 
-        createPokemonTypes, 
-        deletePokemon, 
-        getPokemon, 
-        getPokemonById, 
-        getPokemonByName, 
-        updatePokemon 
-    } 
-from "./pokemonController.js";
+import { deletePokemon, getPokemon, getPokemonById, getPokemonByName, updatePokemon } from "./pokemonController.js";
+import { createPokemon, createPokemonAbilities, createPokemonEvolution, createPokemonMoves, createPokemonStats, createPokemonTypes } from "./pokemonControllerPost.js";
 
 export const routerPokemon = express.Router();
 
