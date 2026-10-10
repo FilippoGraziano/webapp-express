@@ -437,17 +437,18 @@ export const createPokemonMoves = async (req, res) => {
     if (learning_mt === undefined) return res.json({ error: `bad request`, message: `Does it learn it from MT?` });
     if (learning_mn === undefined) return res.json({ error: `bad request`, message: `Does it learn it from MN?` });
 
-    const sqlMove = `SELECT * FROM moves WHERE id = ?`;
-    const [resultMove] = await connection.query(sqlMove, move_id);
-    if (resultMove.length === 0) return res.json({ error: `not found`, message: `Move with this id (${move_id}) doesn't exists` });
-    if (learning_mt && resultMove[0].mt === 0) return res.json({ error: `bad request`, message: `This move isn't an MT` });
-    if (learning_mn && resultMove[0].mn === 0) return res.json({ error: `bad request`, message: `This move isn't an MN` });
-    if ((!learning_mn && resultMove[0].mn === 1) || learning_level !== undefined || learning_egg || learning_move_tutor) return res.json({ error: `bad request`, message: `This move can be learn it only with MN` });
-
     const sqlControll = `SELECT * FROM pokemon_move WHERE pokemon_id = ?`;
     const [resultControll] = await connection.query(sqlControll, pokemonId);
     const learnedMove = resultControll.filter(move => move.move_id === move_id);
     if (learnedMove.length !== 0) return res.json({ error: `bad request`, message: `This pokemon already has this move` });
+
+    const sqlMove = `SELECT * FROM moves WHERE id = ?`;
+    const [resultMove] = await connection.query(sqlMove, move_id);
+    if (resultMove.length === 0) return res.json({ error: `not found`, message: `Move with this id (${move_id}) doesn't exists` });
+    if (learning_mt && resultMove[0].mt === null) return res.json({ error: `bad request`, message: `This move isn't an MT` });
+    if (learning_mn && resultMove[0].mn === null) return res.json({ error: `bad request`, message: `This move isn't an MN` });
+    if ((!learning_mn && resultMove[0].mn !== null) || (learning_level !== undefined || learning_egg || learning_move_tutor)) return res.json({ error: `bad request`, message: `This move can be learn it only with MN` });
+    if (!learning_mn && !learning_mt && learning_level === undefined && !learning_egg && !learning_move_tutor) return res.json({ error: `bad request`, message: `The pokemon should be learn the move with the level` });
 
     const sql = `INSERT INTO pokemon_move (move_id, pokemon_id, learning_gen, learning_level, learning_egg, learning_move_tutor, learning_mt, learning_mn) values (?, ?, ?, ?, ?, ?, ?, ?)`;
     await connection.query(sql, [move_id, pokemonId, learning_gen, learning_level, learning_egg, learning_move_tutor, learning_mt, learning_mn]);
