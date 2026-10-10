@@ -89,6 +89,39 @@ export const createItems = async (req, res) => {
 
 };
 
-export const updateItems = async (req, res) => { };
+export const updateItems = async (req, res) => {
 
-export const deleteItems = async (req, res) => { };
+    const id = Number(req.params.id);
+    if (isNaN(id)) res.json({ error: `id error`, message: `The id should be a number` });
+
+    const { name, type } = req.body
+    if (name === undefined) res.json({ error: `body request error`, message: `you have to insert the name` });
+    if (type === undefined) res.json({ error: `body request error`, message: `you have to insert the type` });
+
+
+    const sql = `
+        UPDATE items
+        SET name = ?,
+            type = ?
+        WHERE id = ?
+    `
+    const [result] = await connection.query(sql, [name, type, id]);
+
+    if (result.affectedRows === 0) return notFoundError(req, res, `items`);
+
+    res.sendStatus(204);
+
+};
+
+export const deleteItems = async (req, res) => {
+
+    const id = Number(req.params.id);
+    if (isNaN(id)) res.json({ error: `id error`, message: `The id should be a number` });
+
+    const sql = `DELETE FROM items WHERE id = ?`
+
+    await connection.query(sql, id);
+
+    res.sendStatus(204);
+
+};
