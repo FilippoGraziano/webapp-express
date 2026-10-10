@@ -71,7 +71,7 @@ export const getPokemonById = async (req, res) => {
     const sqlGames = `
         SELECT
             pg.id,
-            g.name game_name,
+            g.name,
             g.region,
             g.region_2,
             pg.pokemon_n_regional,
@@ -186,7 +186,7 @@ export const getPokemonByName = async (req, res) => {
     const sqlGames = `
         SELECT
             pg.id,
-            g.name game_name,
+            g.name,
             g.region,
             g.region_2,
             pg.pokemon_n_regional,
