@@ -19,14 +19,6 @@ export const getPokemonById = async (req, res) => {
     if (isNaN(id)) res.json({ error: `id error`, message: `The id should be a number` });
 
     const sqlPokemon = `SELECT * FROM pokemon WHERE id = ?`;
-    const sqlType = `
-        SELECT
-            t.type
-        FROM types t
-        JOIN pokemon_type pt
-        ON pt.type_id = t.id
-        WHERE pokemon_id = ?
-    `
     const sqlEvolution = `
         SELECT
             e.evo_type,
@@ -59,8 +51,7 @@ export const getPokemonById = async (req, res) => {
     `
     const sqlAbilities = `
         SELECT
-            a.name,
-            a.effect,
+            a.*,
             pa.primary_ability,
             pa.secondary_ability,
             pa.special_ability
@@ -69,8 +60,33 @@ export const getPokemonById = async (req, res) => {
         ON pa.ability_id = a.id
         WHERE pokemon_id = ?
     `
+    const sqlType = `
+        SELECT
+            t.type
+        FROM types t
+        JOIN pokemon_type pt
+        ON pt.type_id = t.id
+        WHERE pokemon_id = ?
+    `
+    const sqlGames = `
+        SELECT
+            pg.id,
+            g.name game_name,
+            g.region,
+            g.region_2,
+            pg.pokemon_n_regional,
+            pg.pokedex_zone,
+            pg.regional_form
+        FROM pokemon_game pg
+        JOIN pokemon p
+        ON p.id = pg.pokemon_id
+        JOIN games g
+        ON g.id = pg.game_id
+        WHERE p.id = 1
+    `
     const sqlMoves = `
         SELECT
+            m.id,
             m.name,
             t.type,
             m.effect,
@@ -91,16 +107,18 @@ export const getPokemonById = async (req, res) => {
     const [[resultPokemon]] = await connection.query(sqlPokemon, id);
     if (resultPokemon === undefined) return notFoundError(req, res, `pokemon`);
 
-    const [resultType] = await connection.query(sqlType, id);
     const [[resultEvolution]] = await connection.query(sqlEvolution, id);
-    const [resultMoves] = await connection.query(sqlMoves, id);
-    const [resultAbilities] = await connection.query(sqlAbilities, id);
     const [[resultStats]] = await connection.query(sqlStats, id);
+    const [resultAbilities] = await connection.query(sqlAbilities, id);
+    const [resultType] = await connection.query(sqlType, id);
+    const [resultGames] = await connection.query(sqlGames, id);
+    const [resultMoves] = await connection.query(sqlMoves, id);
 
     if (resultEvolution !== undefined) resultPokemon.evolution = Object.fromEntries(Object.entries(resultEvolution).filter(([_, value]) => value !== null));
     resultPokemon.stats = resultStats;
     resultPokemon.abilities = resultAbilities.map(ability => Object.fromEntries(Object.entries(ability).filter(([_, value]) => value !== 0)));
     resultPokemon.types = resultType.map(type => type.type);
+    resultPokemon.games = resultGames.map(game => Object.fromEntries(Object.entries(game).filter(([_, value]) => value !== null)));
     resultPokemon.moves = resultMoves.map(move => Object.fromEntries(Object.entries(move).filter(([_, value]) => value !== null)));
 
     res.send(resultPokemon);
@@ -112,16 +130,6 @@ export const getPokemonByName = async (req, res) => {
     const name = req.params.name;
 
     const sql = `SELECT * FROM pokemon WHERE name = ?`;
-    const sqlType = `
-        SELECT
-            t.type
-        FROM types t
-        JOIN pokemon_type pt
-        ON pt.type_id = t.id
-        JOIN pokemon p
-        ON p.id = pt.pokemon_id
-        WHERE p.name = ?
-    `
     const sqlEvolution = `
         SELECT
             e.evo_type,
@@ -165,6 +173,32 @@ export const getPokemonByName = async (req, res) => {
         ON p.id = pa.pokemon_id
         WHERE p.name = ?
     `
+    const sqlType = `
+        SELECT
+            t.type
+        FROM types t
+        JOIN pokemon_type pt
+        ON pt.type_id = t.id
+        JOIN pokemon p
+        ON p.id = pt.pokemon_id
+        WHERE p.name = ?
+    `
+    const sqlGames = `
+        SELECT
+            pg.id,
+            g.name game_name,
+            g.region,
+            g.region_2,
+            pg.pokemon_n_regional,
+            pg.pokedex_zone,
+            pg.regional_form
+        FROM pokemon_game pg
+        JOIN pokemon p
+        ON p.id = pg.pokemon_id
+        JOIN games g
+        ON g.id = pg.game_id
+        WHERE p.name = ?
+    `
     const sqlMoves = `
         SELECT
             m.id,
@@ -190,16 +224,18 @@ export const getPokemonByName = async (req, res) => {
     const [[resultPokemon]] = await connection.query(sql, name);
     if (resultPokemon === undefined) return notFoundError(req, res, `pokemon`);
 
-    const [resultType] = await connection.query(sqlType, name);
     const [[resultEvolution]] = await connection.query(sqlEvolution, name);
-    const [resultMoves] = await connection.query(sqlMoves, name);
-    const [resultAbilities] = await connection.query(sqlAbilities, name);
     const [[resultStats]] = await connection.query(sqlStats, name);
+    const [resultAbilities] = await connection.query(sqlAbilities, name);
+    const [resultType] = await connection.query(sqlType, name);
+    const [resultGames] = await connection.query(sqlGames, name);
+    const [resultMoves] = await connection.query(sqlMoves, name);
 
     if (resultEvolution !== undefined) resultPokemon.evolution = Object.fromEntries(Object.entries(resultEvolution).filter(([_, value]) => value !== null));
     resultPokemon.stats = resultStats;
     resultPokemon.abilities = resultAbilities.map(ability => Object.fromEntries(Object.entries(ability).filter(([_, value]) => value !== 0)));
     resultPokemon.types = resultType.map(type => type.type);
+    resultPokemon.games = resultGames.map(game => Object.fromEntries(Object.entries(game).filter(([_, value]) => value !== null)));
     resultPokemon.moves = resultMoves.map(move => Object.fromEntries(Object.entries(move).filter(([_, value]) => value !== null)));
 
     res.send(resultPokemon);
