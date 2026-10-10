@@ -4,6 +4,7 @@ import { routerPokemon } from './resources/pokemonResources/pokemonRouters.js';
 import { routerTypes } from './resources/typesResources/typesRouters.js';
 import { routerMoves } from './resources/movesResources/movesRouters.js';
 import { routerAbilities } from './resources/abilitiesResources/abilitiesRouters.js';
+import { routerItems } from './resources/itemsResources/itemsRouters.js';
 
 const app = express();
 const port = process.env.SERVER_PORT;
@@ -20,6 +21,7 @@ app.use(`/pokemon`, routerPokemon);
 app.use(`/types`, routerTypes);
 app.use(`/moves`, routerMoves);
 app.use(`/abilities`, routerAbilities);
+app.use(`/items`, routerItems);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
