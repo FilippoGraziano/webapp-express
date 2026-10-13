@@ -1,6 +1,15 @@
 import { connection } from '../../data/db.js';
+import { notFoundError } from '../../errorFunctions.js';
 
 export const getGames = async (req, res) => {
+
+    const sql = `SELECT * FROM games`;
+
+    const [result] = await connection.query(sql);
+
+    if (result.length === 0) return notFoundError(req, res, `games`);
+
+    res.send(result);
 
 };
 
