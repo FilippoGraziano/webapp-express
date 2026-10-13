@@ -81,4 +81,13 @@ export const updateGames = async (req, res) => {
 
 export const deleteGames = async (req, res) => {
 
+    const id = Number(req.params.id);
+    if (isNaN(id)) res.json({ error: `id error`, message: `The id should be a number` });
+
+    const sql = `DELETE FROM games WHERE id = ?`
+
+    await connection.query(sql, id);
+
+    res.sendStatus(204);
+
 };
