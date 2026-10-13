@@ -5,6 +5,7 @@ import { routerTypes } from './resources/typesResources/typesRouters.js';
 import { routerMoves } from './resources/movesResources/movesRouters.js';
 import { routerAbilities } from './resources/abilitiesResources/abilitiesRouters.js';
 import { routerItems } from './resources/itemsResources/itemsRouters.js';
+import { routerGames } from './resources/gamesResources/gamesRouter.js';
 
 const app = express();
 const port = process.env.SERVER_PORT;
@@ -22,6 +23,7 @@ app.use(`/types`, routerTypes);
 app.use(`/moves`, routerMoves);
 app.use(`/abilities`, routerAbilities);
 app.use(`/items`, routerItems);
+app.use(`/GAMES`, routerGames);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
