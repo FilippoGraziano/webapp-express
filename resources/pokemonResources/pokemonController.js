@@ -82,7 +82,7 @@ export const getPokemonById = async (req, res) => {
         ON p.id = pg.pokemon_id
         JOIN games g
         ON g.id = pg.game_id
-        WHERE p.id = 1
+        WHERE p.id = ?
     `
     const sqlMoves = `
         SELECT
