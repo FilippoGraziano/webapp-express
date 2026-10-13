@@ -27,11 +27,22 @@ export const getGamesById = async (req, res) => {
 
 };
 
-export const getGamesByName = async (req, res) => {
-
-};
-
 export const createGames = async (req, res) => {
+
+    const { name, region, region_2 } = req.body
+    if (name === undefined) res.json({ error: `body request error`, message: `you have to insert the name` });
+    if (region === undefined) res.json({ error: `body request error`, message: `you have to insert the region` });
+
+
+    const sql = `INSERT INTO games (name, region, region_2) VALUES (?, ?, ?)`
+    const [result] = await connection.query(sql, [name, region, region_2]);
+
+    res.json({
+        id: result.insertId,
+        name,
+        region,
+        region_2
+    })
 
 };
 
