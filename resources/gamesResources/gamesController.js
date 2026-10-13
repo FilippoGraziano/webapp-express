@@ -48,6 +48,35 @@ export const createGames = async (req, res) => {
 
 export const updateGames = async (req, res) => {
 
+    const id = Number(req.params.id);
+    if (isNaN(id)) res.json({ error: `id error`, message: `The id should be a number` });
+
+    const { name, region, region_2 } = req.body
+    if (name === undefined) res.json({ error: `body request error`, message: `you have to insert the name` });
+    if (region === undefined) res.json({ error: `body request error`, message: `you have to insert the region` });
+
+    let sql = `
+        UPDATE games
+        SET name = ?,
+            region = ?
+        WHERE id = ?
+    `;
+    if (region_2 !== undefined) sql =`
+        UPDATE games
+        SET name = ?,
+            region = ?,
+            region_2 = ?
+        WHERE id = ?
+    `;
+
+    let result;
+    if (region_2 !== undefined) [result] = await connection.query(sql, [name, region, region_2, id])
+    else [result] = await connection.query(sql, [name, region, id]);
+
+    if (result.affectedRows === 0) return notFoundError(req, res, `games`);
+
+    res.sendStatus(204);
+
 };
 
 export const deleteGames = async (req, res) => {
