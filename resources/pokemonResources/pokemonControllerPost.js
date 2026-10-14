@@ -14,15 +14,45 @@ export const createPokemon = async (req, res) => {
         female,
         image
     } = req.body
-    if (name === undefined) res.json({ error: `body request error`, message: `you have to insert the name of the pokemon` });
-    if (height === undefined) res.json({ error: `body request error`, message: `you have to insert the height of the pokemon` });
-    if (weight === undefined) res.json({ error: `body request error`, message: `you have to insert the wheigth of the pokemon` });
-    if (n_international === undefined) res.json({ error: `body request error`, message: `you have to insert the international number of the pokemon` });
-    if (generation === undefined) res.json({ error: `body request error`, message: `you have to insert the generation of the pokemon` });
-    if (description === undefined) res.json({ error: `body request error`, message: `you have to insert the description of the pokemon` });
-    if (male === undefined) res.json({ error: `body request error`, message: `you have to insert the chance of found a male species of the pokemon` });
-    if (female === undefined) res.json({ error: `body request error`, message: `you have to insert the chance of found a female species of the pokemon` });
-    if (image === undefined) res.json({ error: `body request error`, message: `you have to insert the image of the pokemon` });
+    if (name === undefined || name === ``) return res.json({ error: `body request error`, message: `you have to insert the name of the pokemon` });
+    if (typeof name !== `string`) return res.json({ error: `body request error`, message: `the name should be a string` });
+    if (name.length < 3) return res.json({ error: `body request error`, message: `you have to insert a longest name` });
+
+    if (height === undefined) return res.json({ error: `body request error`, message: `you have to insert the height of the pokemon` });
+    if (typeof height !== `number`) return res.json({ error: `body request error`, message: `the height should be a number` });
+    if (height < 0.1) return res.json({ error: `body request error`, message: `the height should be bigger than 0` });
+
+    if (weight === undefined) return res.json({ error: `body request error`, message: `you have to insert the wheigth of the pokemon` });
+    if (typeof weight !== `number`) return res.json({ error: `body request error`, message: `the weight should be a number` });
+    if (weight < 0.1) return res.json({ error: `body request error`, message: `the weight should be bigger than 0` });
+
+    if (n_international === undefined) return res.json({ error: `body request error`, message: `you have to insert the international number of the pokemon` });
+    if (typeof n_international !== `number`) return res.json({ error: `body request error`, message: `the n_internationl should be a number` });
+    if (n_international < 1) return res.json({ error: `body request error`, message: `the n_internationl should be bigger than 0` });
+
+    if (generation === undefined) return res.json({ error: `body request error`, message: `you have to insert the generation of the pokemon` });
+    if (typeof generation !== `number`) return res.json({ error: `body request error`, message: `the generation should be a number` });
+    if (generation < 1) return res.json({ error: `body request error`, message: `the generation should be bigger than 0` });
+    if (generation > 10) return res.json({ error: `body request error`, message: `the generation shouldn't be bigger than 10` });
+
+    if (description === undefined) return res.json({ error: `body request error`, message: `you have to insert the description of the pokemon` });
+    if (typeof description !== `string`) return res.json({ error: `body request error`, message: `the description should be a string` });
+    if (description.length < 15) return res.json({ error: `body request error`, message: `you have to insert a longest description` });
+
+    if (male === undefined) return res.json({ error: `body request error`, message: `you have to insert the chance of found a male species of the pokemon` });
+    if (typeof male !== `number`) return res.json({ error: `body request error`, message: `the percent of male should be a number` });
+    if (male < 0) return res.json({ error: `body request error`, message: `the percent of male can't be a negative number` });
+    if (male > 100) return res.json({ error: `body request error`, message: `the percent of male can't be bigger than 100` });
+
+    if (female === undefined) return res.json({ error: `body request error`, message: `you have to insert the chance of found a female species of the pokemon` });
+    if (typeof female !== `number`) return res.json({ error: `body request error`, message: `the percent of female should be a number` });
+    if (female < 0) return res.json({ error: `body request error`, message: `the percent of female can't be a negative number` });
+    if (female > 100) return res.json({ error: `body request error`, message: `the percent of female can't be bigger than 100` });
+
+    if (image === undefined) return res.json({ error: `body request error`, message: `you have to insert the image of the pokemon` });
+    if (image.includes(`..`)) return res.json({ error: `body request error`, message: `the image file/name shouldn't includes '..'` });
+    const regex = /\.\s*(?!png\b)\w+/i;
+    if (regex.test(image)) return res.json({ error: `body request error`, message: `the image file/name should be '.png'` });
 
     const sql = `
         INSERT INTO pokemon ( name, height, weight, n_international, generation, description, male, female, image ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )
