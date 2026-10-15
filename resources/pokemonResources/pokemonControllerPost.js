@@ -86,19 +86,44 @@ export const createPokemon = async (req, res) => {
 
 export const createPokemonEvolution = async (req, res) => {
 
-    const pokemonId = req.params.id;
+    const pokemonId = Number(req.params.id);
+    if (isNaN(pokemonId)) return res.json({error: `id error`, message: `the pokemon id should be a number`})
 
     const { evo_type, item_id, evo_method, evo_pokemon_id } = req.body;
+
+    if (pokemonId === evo_pokemon_id) return res.json({error: `bad request`, message: `the pokemon id can't be the same of evo_pokemon_id`});
+
     if (evo_type === undefined) return res.json({ error: `body request error`, message: `you have to insert the type of evolution` });
-    if (evo_method === undefined) return res.json({ error: `body request error`, message: `you have to insert the method of evolution` });
-    if (evo_pokemon_id === undefined) return res.json({ error: `body request error`, message: `you have to insert the evolved pokemon ` });
-    if (item_id !== undefined) {
+    if (evo_type === ``) return res.json({ error: `body request error`, message: `you have to insert the type of evolution` });
+    // if (!evo_type.includes(`item`) || !evo_type.includes(`level`) || !evo_type.includes(`trade`));
+    if (typeof evo_type !== `string`) return res.json({ error: `body request error`, message: `the type of evolution should be a string` });
+
+    if (typeof item_id === `number` && (evo_type === `item` || evo_method === `trade with item`)) {
         const sqlItem = ` SELECT * FROM items WHERE id = ? `;
         const [resultItem] = await connection.query(sqlItem, item_id);
         if (resultItem.length === 0) return res.json({ error: `not found`, message: `item with this id (${item_id}) doesn't exist` });
     }
 
-    const sqlEvoPok = ` SELECT * FROM pokemon WHERE id = ? `;
+    if (evo_method === undefined) return res.json({ error: `body request error`, message: `you have to insert the method of evolution` });
+    if (evo_method === `` && evo_type !== `level`) return res.json({ error: `body request error`, message: `you have to insert the metod of evolution` });
+    if (typeof evo_method !== `string` && evo_type !== `level`) return res.json({ error: `body request error`, message: `the method of evolution should be a string` });
+
+    if ((evo_type === `item` || evo_method === `trade with item`) && typeof item_id !== `number`) return res.json({ error: `body request error`, message: `the type of item_id should be a number` });
+    if ((evo_type === `level` || (evo_type === `trade` && evo_method !== `trade with item`)) && (typeof item_id === `string` || typeof item_id === `number`)) return res.json({ error: `bad request`, message: `if evo_type is 'level'/'trade' the item should be null/undefined` });
+    if (evo_type === `level` && typeof evo_method !== `number`) return res.json({ error: `body request error`, message: `if evo_type is level the method of evolution should be a number` });
+
+    if (evo_pokemon_id === undefined) return res.json({ error: `body request error`, message: `you have to insert the evolved pokemon ` });
+    if (typeof evo_pokemon_id !== `number`) return res.json({ error: `body request error`, message: `the type of evo_pokemon_id should be a number` });
+
+    const sqlExistEvo = `SELECT * FROM evolutions WHERE pokemon_id = ?`;
+    const [resultExistEvo] = await connection.query(sqlExistEvo, pokemonId);
+    if (resultExistEvo.length > 0) return res.json({ error: `existing record`, message: `this pokemon (id: ${pokemonId}) already has an evolution` });
+    
+    const sqlExistEvoPokemon = `SELECT * FROM evolutions WHERE evo_pokemon_id = ?`;
+    const [resultExistEvoPokemon] = await connection.query(sqlExistEvoPokemon, evo_pokemon_id);
+    if (resultExistEvoPokemon.length > 0) return res.json({ error: `existing record`, message: `this pokemon (id: ${evo_pokemon_id}) already has a pre evolution` });
+
+    const sqlEvoPok = `SELECT * FROM pokemon WHERE id = ?`;
     const [resultEvoPok] = await connection.query(sqlEvoPok, evo_pokemon_id);
     if (resultEvoPok.length === 0) return res.json({ error: `not found`, message: `pokemon with this id (${evo_pokemon_id}) doesn't exist` });
 
@@ -270,7 +295,7 @@ export const createPokemonGames = async (req, res) => {
     let resultRegionalNumber;
     if (pokedex_zone === undefined || pokedex_zone === null) {
         [resultRegionalNumber] = await connection.query(sqlRegionalNumber, [game_id, pokemon_n_regional]);
-        if (resultRegionalNumber.length !== 0) return res.json({error:`bad request`, message: `Already exist a pokemon in this game (${game_id}) and this regional number (${pokemon_n_regional})`})
+        if (resultRegionalNumber.length !== 0) return res.json({ error: `bad request`, message: `Already exist a pokemon in this game (${game_id}) and this regional number (${pokemon_n_regional})` })
     }
 
     const sqlRegionalNumberZone = `
@@ -279,17 +304,17 @@ export const createPokemonGames = async (req, res) => {
     `;
     const [resultRegionalNumberZone] = await connection.query(sqlRegionalNumberZone, [game_id, pokemon_n_regional, pokedex_zone]);
     console.log(resultRegionalNumberZone)
-    if (resultRegionalNumberZone.length !== 0) return res.json({error:`bad request`, message: `Already exist a pokemon in this game (${game_id}) and this regional number (${pokemon_n_regional}) in this pokedex zone (${pokedex_zone})`})
-    
+    if (resultRegionalNumberZone.length !== 0) return res.json({ error: `bad request`, message: `Already exist a pokemon in this game (${game_id}) and this regional number (${pokemon_n_regional}) in this pokedex zone (${pokedex_zone})` })
+
     const sql = `INSERT INTO pokemon_game (pokemon_id, game_id, pokemon_n_regional, pokedex_zone, regional_form) values (?, ?, ?, ?, ?)`;
     let result;
     if ((resultGame[0].name === `X / Y`
-            &&
-            (pokedex_zone === `central` || pokedex_zone === `mountain` || pokedex_zone === `coastal`)
-        )
+        &&
+        (pokedex_zone === `central` || pokedex_zone === `mountain` || pokedex_zone === `coastal`)
+    )
         ||
         ((resultGame[0].name === 'Sun / Moon' || resultGame[0].name === 'Ultra Sun / Ultra Moon')
-            && 
+            &&
             (pokedex_zone === `akala` || pokedex_zone === `melemele` || pokedex_zone === `poni` || pokedex_zone === `ulaula`)
         )
         ||
