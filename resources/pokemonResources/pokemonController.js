@@ -331,16 +331,3 @@ export const updatePokemon = async (req, res) => {
     res.sendStatus(204);
 
 };
-
-export const deletePokemon = async (req, res) => {
-
-    const id = Number(req.params.id);
-    if (isNaN(id)) res.json({ error: `id error`, message: `The id should be a number` });
-
-    const sql = `DELETE FROM pokemon WHERE id = ?`
-
-    await connection.query(sql, id);
-
-    res.sendStatus(204);
-
-};
