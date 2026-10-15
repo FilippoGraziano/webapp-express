@@ -193,7 +193,7 @@ export const createPokemonStats = async (req, res) => {
     if (speed > 255) return res.status(400).json({ error: `body request error`, message: `the stat of speed can't be higher than 255` });
     if (speed < 1) return res.status(400).json({ error: `body request error`, message: `the stat of speed can't be lower than 1` });
 
-    if ((ps + attack + defense + sp_attack + sp_defense + speed) !== tot_stats) return res.json({ error: `body request error`, message: `tot_stats has to be the same as the sum of the other stats` });
+    if ((ps + attack + defense + sp_attack + sp_defense + speed) !== tot_stats) return res.status(400).json({ error: `body request error`, message: `tot_stats has to be the same as the sum of the other stats` });
 
     const sql = `INSERT INTO stats ( pokemon_id, tot_stats, ps, attack, defense, sp_attack, sp_defense, speed) values (?, ?, ?, ?, ?, ?, ?, ?)`
     const [result] = await connection.query(sql, [pokemonId, tot_stats, ps, attack, defense, sp_attack, sp_defense, speed])
