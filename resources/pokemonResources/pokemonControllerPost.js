@@ -351,11 +351,11 @@ export const createPokemonGames = async (req, res) => {
     if (resultGame[0].name === `X / Y` && (pokedex_zone === undefined || pokedex_zone === null || typeof pokedex_zone !== `string`)) return res.json({ error: `bad request`, message: `You have to insert a pokedex_zone (central, mountain or coastal) in pokemon ${resultGame[0].name}` });
     if ((resultGame[0].name === 'Sun / Moon' || resultGame[0].name === 'Ultra Sun / Ultra Moon') && (pokedex_zone === undefined || pokedex_zone === null || typeof pokedex_zone !== `string`)) return res.json({ error: `bad request`, message: `You have to insert a pokedex_zone (akala, melemele, poni or ulaula) in pokemon ${resultGame[0].name}` });
     if (
-            (resultGame[0].name !== `X / Y` || resultGame[0].name !== 'Sun / Moon' || resultGame[0].name !== 'Ultra Sun / Ultra Moon')
-            && 
-            (typeof pokedex_zone === `string` || typeof pokedex_zone === `number` || typeof pokedex_zone === `boolean`)
-        ) 
-    return res.json({ error: `bad request`, message: `if game isn't 'X/Y', 'Sun/Moon' or 'Ultra Sun/Ultra Moon' the pokedex_zone should be null/undefined` });
+        (resultGame[0].name !== `X / Y` || resultGame[0].name !== 'Sun / Moon' || resultGame[0].name !== 'Ultra Sun / Ultra Moon')
+        &&
+        (typeof pokedex_zone === `string` || typeof pokedex_zone === `number` || typeof pokedex_zone === `boolean`)
+    )
+        return res.json({ error: `bad request`, message: `if game isn't 'X/Y', 'Sun/Moon' or 'Ultra Sun/Ultra Moon' the pokedex_zone should be null/undefined` });
 
     const sqlRegionalNumber = `
         SELECT * FROM pokemon_game
@@ -406,30 +406,47 @@ export const createPokemonGames = async (req, res) => {
 
 export const createPokemonMoves = async (req, res) => {
 
-    const pokemonId = req.params.id;
+    const pokemonId = Number(req.params.id);
+    if (isNaN(pokemonId)) return res.json({ error: `id error`, message: `the pokemon id should be a number` });
+
+    const sqlPokemon = `SELECT * FROM pokemon WHERE id = ?`;
+    const [resultPokemon] = await connection.query(sqlPokemon, pokemonId);
+    if (resultPokemon.length === 0) return notFoundError(req, res, `pokemon`);
 
     const { move_id, learning_gen, learning_level, learning_egg, learning_move_tutor, learning_mt, learning_mn } = req.body;
     if (move_id === undefined) return res.json({ error: `bad request`, message: `You have to insert the move id` });
-    if (learning_gen === undefined) return res.json({ error: `bad request`, message: `You have to insert learning gen` });
-    if (learning_level !== undefined) {
-        if (isNaN(learning_level) || learning_level === ``) return res.json({ error: `bad request`, message: `The level should be a number` });
-    }
-    if (learning_egg === undefined) return res.json({ error: `bad request`, message: `Does it learn it from egg?` });
-    if (learning_move_tutor === undefined) return res.json({ error: `bad request`, message: `Does it learn it from move tutor?` });
-    if (learning_mt === undefined) return res.json({ error: `bad request`, message: `Does it learn it from MT?` });
-    if (learning_mn === undefined) return res.json({ error: `bad request`, message: `Does it learn it from MN?` });
+    if (typeof move_id !== `number`) return res.json({ error: `bad request`, message: `the type of move_id should be number` });
 
-    const sqlControll = `SELECT * FROM pokemon_move WHERE pokemon_id = ?`;
-    const [resultControll] = await connection.query(sqlControll, pokemonId);
-    const learnedMove = resultControll.filter(move => move.move_id === move_id);
-    if (learnedMove.length !== 0) return res.json({ error: `bad request`, message: `This pokemon already has this move` });
+    if (learning_gen === undefined) return res.json({ error: `bad request`, message: `You have to insert learning gen` });
+    if (typeof learning_gen !== `number`) return res.json({ error: `bad request`, message: `the type of learning_gen should be number` });
+    if (learning_gen < 1) return res.json({ error: `bad request`, message: `learning_gen should be higher than 0` });
+    if (learning_gen > 11) return res.json({ error: `bad request`, message: `learning_gen should be lower than 11` });
+
+    if (typeof learning_level === `string` || typeof learning_level === `boolean`) return res.json({ error: `bad request`, message: `The level should be a number` });
+    if (
+            (learning_egg === false && learning_move_tutor === false && learning_mt === false && learning_mn === false) 
+            && 
+            (typeof learning_level !== `number` || learning_level < 1 || learning_level > 101)
+        ) 
+    return res.json({ error: `bad request`, message: `you have to insert the learning_level (higer than 0 and lower than 101) if all others are false` });
+
+    if (typeof learning_egg !== `boolean`) return res.json({ error: `bad request`, message: `Does it learn it from egg?` });
+    if (typeof learning_move_tutor !== `boolean`) return res.json({ error: `bad request`, message: `Does it learn it from move tutor?` });
+    if (typeof learning_mt !== `boolean`) return res.json({ error: `bad request`, message: `Does it learn it from MT?` });
+    if (typeof learning_mn !== `boolean`) return res.json({ error: `bad request`, message: `Does it learn it from MN?` });
+
+    const sqlControllMove = `SELECT * FROM pokemon_move WHERE pokemon_id = ?`;
+    const [resultControllMove] = await connection.query(sqlControllMove, pokemonId);
+    const [learnedMove] = resultControllMove.filter(move => move.move_id === move_id);
+    if (learnedMove !== undefined && learnedMove.learning_gen === learning_gen) return res.json({ error: `bad request`, message: `This pokemon already has this move (id: ${move_id}) in this gen (gen: ${learning_gen})` });
 
     const sqlMove = `SELECT * FROM moves WHERE id = ?`;
     const [resultMove] = await connection.query(sqlMove, move_id);
-    if (resultMove.length === 0) return res.json({ error: `not found`, message: `Move with this id (${move_id}) doesn't exists` });
+    console.log(resultMove)
+    if (resultMove.length === 0) return res.json({ error: `not found`, message: `this move (id: ${move_id}) doesn't exists` });
     if (learning_mt && resultMove[0].mt === null) return res.json({ error: `bad request`, message: `This move isn't an MT` });
     if (learning_mn && resultMove[0].mn === null) return res.json({ error: `bad request`, message: `This move isn't an MN` });
-    if ((!learning_mn && resultMove[0].mn !== null) || (learning_level !== undefined || learning_egg || learning_move_tutor)) return res.json({ error: `bad request`, message: `This move can be learn it only with MN` });
+    if ((!learning_mn && resultMove[0].mn !== null) && (learning_level !== undefined || learning_egg || learning_move_tutor)) return res.json({ error: `bad request`, message: `This move can be learn it only with MN` });
     if (!learning_mn && !learning_mt && learning_level === undefined && !learning_egg && !learning_move_tutor) return res.json({ error: `bad request`, message: `The pokemon should be learn the move with the level` });
 
     const sql = `INSERT INTO pokemon_move (move_id, pokemon_id, learning_gen, learning_level, learning_egg, learning_move_tutor, learning_mt, learning_mn) values (?, ?, ?, ?, ?, ?, ?, ?)`;
