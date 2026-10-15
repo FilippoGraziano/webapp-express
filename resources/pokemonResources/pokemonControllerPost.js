@@ -128,7 +128,7 @@ export const createPokemonEvolution = async (req, res) => {
     if (typeof evo_method !== `string` && evo_type !== `level`) return res.json({ error: `body request error`, message: `the method of evolution should be a string` });
 
     if ((evo_type === `item` || evo_method === `trade with item`) && typeof item_id !== `number`) return res.json({ error: `body request error`, message: `the type of item_id should be a number` });
-    if ((evo_type === `level` || (evo_type === `trade` && evo_method !== `trade with item`)) && (typeof item_id === `string` || typeof item_id === `number`)) return res.json({ error: `bad request`, message: `if evo_type is 'level'/'trade' the item should be null/undefined` });
+    if ((evo_type === `level` || (evo_type === `trade` && evo_method !== `trade with item`)) && (typeof item_id === `string` || typeof item_id === `number` || typeof item_id === `boolean`)) return res.json({ error: `bad request`, message: `if evo_type is 'level'/'trade' the item should be null/undefined` });
     if (evo_type === `level` && typeof evo_method !== `number`) return res.json({ error: `body request error`, message: `if evo_type is level the method of evolution should be a number` });
 
     const sql = `INSERT INTO evolutions ( pokemon_id, evo_type, item_id, evo_method, evo_pokemon_id ) values ( ?, ?, ?, ?, ?)`
@@ -328,19 +328,34 @@ export const createPokemonTypes = async (req, res) => {
 
 export const createPokemonGames = async (req, res) => {
 
-    const pokemonId = req.params.id;
+    const pokemonId = Number(req.params.id);
+    if (isNaN(pokemonId)) return res.json({ error: `id error`, message: `the pokemon id should be a number` });
+
+    const sqlPokemon = `SELECT * FROM pokemon WHERE id = ?`;
+    const [resultPokemon] = await connection.query(sqlPokemon, pokemonId);
+    if (resultPokemon.length === 0) return notFoundError(req, res, `pokemon`);
 
     const { game_id, pokemon_n_regional, pokedex_zone, regional_form } = req.body;
     if (game_id === undefined) return res.json({ error: `bad request`, message: `You have to insert the game` });
+    if (typeof game_id !== `number`) return res.json({ error: `bad request`, message: `the type of game_id should be a number` });
+
     if (pokemon_n_regional === undefined) return res.json({ error: `bad request`, message: `You have to insert regional number of pokemon` });
-    if (pokemon_n_regional < 1) return res.json({ error: `bad request`, message: `You have to insert a number > 0 in pokemon_n_regional` });
-    if (regional_form === undefined) return res.json({ error: `bad request`, message: `Is it a regional form?` });
+    if (pokemon_n_regional < 1) return res.json({ error: `bad request`, message: `You have to insert a number higher than 0 in pokemon_n_regional` });
+    if (typeof pokemon_n_regional !== `number`) return res.json({ error: `bad request`, message: `the type of pokemon_n_regional should be a number` });
+
+    if (regional_form === undefined || regional_form === null) return res.json({ error: `bad request`, message: `Is it a regional form?` });
 
     const sqlGames = `SELECT * FROM games WHERE id = ?`;
     const [resultGame] = await connection.query(sqlGames, game_id);
-    if (resultGame.length === 0) return res.json({ error: `not found`, message: `Game with this id (${game_id}) doesn't exists` });
-    if (resultGame[0].name === `X / Y` && (pokedex_zone === undefined || pokedex_zone === null)) return res.json({ error: `bad request`, message: `You have to insert a pokedex_zone (central, mountain or coastal) in pokemon ${resultGame[0].name}` });
-    if ((resultGame[0].name === 'Sun / Moon' || resultGame[0].name === 'Ultra Sun / Ultra Moon') && (pokedex_zone === undefined || pokedex_zone === null)) return res.json({ error: `bad request`, message: `You have to insert a pokedex_zone (akala, melemele, poni or ulaula) in pokemon ${resultGame[0].name}` });
+    if (resultGame.length === 0) return res.json({ error: `not found`, message: `this game (id: ${game_id}) doesn't exists` });
+    if (resultGame[0].name === `X / Y` && (pokedex_zone === undefined || pokedex_zone === null || typeof pokedex_zone !== `string`)) return res.json({ error: `bad request`, message: `You have to insert a pokedex_zone (central, mountain or coastal) in pokemon ${resultGame[0].name}` });
+    if ((resultGame[0].name === 'Sun / Moon' || resultGame[0].name === 'Ultra Sun / Ultra Moon') && (pokedex_zone === undefined || pokedex_zone === null || typeof pokedex_zone !== `string`)) return res.json({ error: `bad request`, message: `You have to insert a pokedex_zone (akala, melemele, poni or ulaula) in pokemon ${resultGame[0].name}` });
+    if (
+            (resultGame[0].name !== `X / Y` || resultGame[0].name !== 'Sun / Moon' || resultGame[0].name !== 'Ultra Sun / Ultra Moon')
+            && 
+            (typeof pokedex_zone === `string` || typeof pokedex_zone === `number` || typeof pokedex_zone === `boolean`)
+        ) 
+    return res.json({ error: `bad request`, message: `if game isn't 'X/Y', 'Sun/Moon' or 'Ultra Sun/Ultra Moon' the pokedex_zone should be null/undefined` });
 
     const sqlRegionalNumber = `
         SELECT * FROM pokemon_game
@@ -349,7 +364,7 @@ export const createPokemonGames = async (req, res) => {
     let resultRegionalNumber;
     if (pokedex_zone === undefined || pokedex_zone === null) {
         [resultRegionalNumber] = await connection.query(sqlRegionalNumber, [game_id, pokemon_n_regional]);
-        if (resultRegionalNumber.length !== 0) return res.json({ error: `bad request`, message: `Already exist a pokemon in this game (${game_id}) and this regional number (${pokemon_n_regional})` })
+        if (resultRegionalNumber.length !== 0) return res.json({ error: `bad request`, message: `Already exist a pokemon in this game (id: ${game_id}) and with this regional number (id: ${pokemon_n_regional})` })
     }
 
     const sqlRegionalNumberZone = `
@@ -357,7 +372,6 @@ export const createPokemonGames = async (req, res) => {
         WHERE game_id = ? && pokemon_n_regional = ? && pokedex_zone = ?
     `;
     const [resultRegionalNumberZone] = await connection.query(sqlRegionalNumberZone, [game_id, pokemon_n_regional, pokedex_zone]);
-    console.log(resultRegionalNumberZone)
     if (resultRegionalNumberZone.length !== 0) return res.json({ error: `bad request`, message: `Already exist a pokemon in this game (${game_id}) and this regional number (${pokemon_n_regional}) in this pokedex zone (${pokedex_zone})` })
 
     const sql = `INSERT INTO pokemon_game (pokemon_id, game_id, pokemon_n_regional, pokedex_zone, regional_form) values (?, ?, ?, ?, ?)`;
