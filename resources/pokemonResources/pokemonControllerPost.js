@@ -297,10 +297,16 @@ export const createPokemonAbilities = async (req, res) => {
 
 export const createPokemonTypes = async (req, res) => {
 
-    const pokemonId = req.params.id;
+    const pokemonId = Number(req.params.id);
+    if (isNaN(pokemonId)) return res.json({ error: `id error`, message: `the pokemon id should be a number` });
+
+    const sqlPokemon = `SELECT * FROM pokemon WHERE id = ?`;
+    const [resultPokemon] = await connection.query(sqlPokemon, pokemonId);
+    if (resultPokemon.length === 0) return notFoundError(req, res, `pokemon`);
 
     const { type_id } = req.body;
     if (type_id === undefined) return res.json({ error: `bad request`, message: `You have to insert the type of pokemon` });
+    if (typeof type_id !== `number`) return res.json({ error: `bad request`, message: `the type of type_id should be a number` });
 
     const sqlType = `SELECT * FROM types WHERE id = ?`;
     const [resultType] = await connection.query(sqlType, type_id);
