@@ -100,7 +100,7 @@ export const createPokemonEvolution = async (req, res) => {
 
     const sqlEvoPok = `SELECT * FROM pokemon WHERE id = ?`;
     const [resultEvoPok] = await connection.query(sqlEvoPok, evo_pokemon_id);
-    if (resultEvoPok.length === 0) return notFoundError(req, res, `evo_pokemon`);
+    if (resultEvoPok.length === 0) return res.json({ error: `not found`, message: `evo pokemon with this id (${evo_pokemon_id}) doesn't exist` });
 
     if (evo_pokemon_id === undefined) return res.json({ error: `body request error`, message: `you have to insert the evolved pokemon ` });
     if (typeof evo_pokemon_id !== `number`) return res.json({ error: `body request error`, message: `the type of evo_pokemon_id should be a number` });
@@ -213,44 +213,45 @@ export const createPokemonStats = async (req, res) => {
 
 export const createPokemonAbilities = async (req, res) => {
 
-    const pokemonId = req.params.id;
+    const pokemonId = Number(req.params.id);
+    if (isNaN(pokemonId)) return res.json({ error: `id error`, message: `the pokemon id should be a number` });
+
+    const sqlPokemon = `SELECT * FROM pokemon WHERE id = ?`;
+    const [resultPokemon] = await connection.query(sqlPokemon, pokemonId);
+    if (resultPokemon.length === 0) return notFoundError(req, res, `pokemon`);
+
+    const sqlSame = `SELECT * FROM pokemon_ability WHERE pokemon_id = ?`;
+    const [resultSame] = await connection.query(sqlSame, pokemonId);
+    if (resultSame.length === 3) return res.json({ error: `bad request`, message: `this pokemon has reached the max of ability` });
 
     const { ability_id, primary_ability, secondary_ability, special_ability } = req.body;
     if (ability_id === undefined) return res.json({ error: `body request error`, message: `you have to insert the ability of pokemon` });
+    if (typeof ability_id !== `number`) return res.json({ error: `body request error`, message: `ability_id should be a number` });
+
+    const sqlAbility = `SELECt * FROM abilities WHERE id = ?`;
+    const [resultAbility] = await connection.query(sqlAbility, ability_id);
+    if (resultAbility.length === 0) return res.json({ error: `not found`, message: `Ability with this id (${ability_id}) doesn't exist` });
+
     if (primary_ability === undefined) return res.json({ error: `body request error`, message: `Is a primary ability?` });
     if (secondary_ability === undefined) return res.json({ error: `body request error`, message: `Is a secondary ability?` });
     if (special_ability === undefined) return res.json({ error: `body request error`, message: `Is a special ability?` });
 
-    const sqlAbility = `SELECt * FROM abilities WHERE id = ?`;
-    const [resultAbility] = await connection.query(sqlAbility, ability_id);
-    if (resultAbility.length === 0) return res.json({ error: `not found`, message: `Ability with this id (${ability_id}) doesn't exist` })
-
-    if (primary_ability && secondary_ability) return res.json({ error: `bad request`, message: `Only one of 'primary_ability' and 'seondary_ability' should be TRUE` });
-    if (primary_ability && special_ability) return res.json({ error: `bad request`, message: `Only one of 'primary_ability' and 'special_ability' should be TRUE` });
-    if (secondary_ability && special_ability) return res.json({ error: `bad request`, message: `Only one of 'secondary_ability' and 'special_ability' should be TRUE` });
-    if (!primary_ability && !secondary_ability && !special_ability) return res.json({ error: `bad request`, message: `One of 'primary_ability', 'seondary_ability' and 'special_ability' should be TRUE` });
-
-    const sqlSame = `SELECT * FROM pokemon_ability WHERE pokemon_id = ?`
-    const [resultSame] = await connection.query(sqlSame, pokemonId)
     if (resultSame.length !== 0) {
 
         let ability1;
         let ability2;
-        let ability3;
         resultSame.forEach((ability, i) => (
             i === 0 ?
                 ability1 = ability.ability_id :
                 i === 1 ?
                     ability2 = ability.ability_id :
-                    i === 2 ?
-                        ability3 = ability.ability_id :
-                        undefined
+                    undefined
         ));
-        if (ability_id === ability1 || ability_id === ability2 || ability_id === ability3) return res.json({ error: `bad request`, message: `This pokemon already has this ability` });
+        if (ability_id === ability1 || ability_id === ability2) return res.json({ error: `bad request`, message: `This pokemon already has this ability` });
 
         if (primary_ability) {
             let primary = 0;
-            resultSame.forEach((ability, i) => (
+            resultSame.forEach((ability) => (
                 ability.primary_ability === 1 ?
                     primary = 1 :
                     undefined
@@ -259,7 +260,7 @@ export const createPokemonAbilities = async (req, res) => {
         }
         if (secondary_ability) {
             let secondary = 0;
-            resultSame.forEach((ability, i) => (
+            resultSame.forEach((ability) => (
                 ability.secondary_ability === 1 ?
                     secondary = 1 :
                     undefined
@@ -268,7 +269,7 @@ export const createPokemonAbilities = async (req, res) => {
         }
         if (special_ability) {
             let special = 0;
-            resultSame.forEach((ability, i) => (
+            resultSame.forEach((ability) => (
                 ability.special_ability === 1 ?
                     special = 1 :
                     undefined
@@ -276,6 +277,11 @@ export const createPokemonAbilities = async (req, res) => {
             if (special === 1) return res.json({ error: `bad request`, message: `The special ability already exists` });
         }
     }
+
+    if (primary_ability && secondary_ability) return res.json({ error: `bad request`, message: `Only one of 'primary_ability' and 'seondary_ability' should be TRUE` });
+    if (primary_ability && special_ability) return res.json({ error: `bad request`, message: `Only one of 'primary_ability' and 'special_ability' should be TRUE` });
+    if (secondary_ability && special_ability) return res.json({ error: `bad request`, message: `Only one of 'secondary_ability' and 'special_ability' should be TRUE` });
+    if (!primary_ability && !secondary_ability && !special_ability) return res.json({ error: `bad request`, message: `One of 'primary_ability', 'seondary_ability' and 'special_ability' should be TRUE` });
 
     const sql = `INSERT INTO pokemon_ability (pokemon_id, ability_id, primary_ability, secondary_ability, special_ability) values (?, ?, ?, ?, ?)`
     await connection.query(sql, [pokemonId, ability_id, primary_ability, secondary_ability, special_ability])
