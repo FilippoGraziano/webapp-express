@@ -304,26 +304,35 @@ export const createPokemonTypes = async (req, res) => {
     const [resultPokemon] = await connection.query(sqlPokemon, pokemonId);
     if (resultPokemon.length === 0) return notFoundError(req, res, `pokemon`);
 
-    const { type_id } = req.body;
+    const { type_id, type_id2 } = req.body;
     if (type_id === undefined) return res.json({ error: `bad request`, message: `You have to insert the type of pokemon` });
     if (typeof type_id !== `number`) return res.json({ error: `bad request`, message: `the type of type_id should be a number` });
-
-    const sqlType = `SELECT * FROM types WHERE id = ?`;
-    const [resultType] = await connection.query(sqlType, type_id);
-    if (resultType.length === 0) return res.json({ error: `not found`, message: `Type with this id (${type_id}) doesn't exists` });
 
     const sqlControll = `SELECT * FROM pokemon_type WHERE pokemon_id = ?`;
     const [resultControll] = await connection.query(sqlControll, pokemonId);
     if (resultControll.length === 1 && type_id === resultControll[0].type_id) return res.json({ error: `bad request`, message: `The pokemon already has this type` });
-    if (resultControll.length === 2) return res.json({ error: `bad request`, message: `The pokemon can't have more than 2 types` });
+    if (resultControll.length === 2) return res.json({ error: `bad request`, message: `this pokemon (id: ${pokemonId}) can't have more than 2 types` });
+
+    const sqlType = `SELECT * FROM types WHERE id = ?`;
+    const [resultType] = await connection.query(sqlType, type_id);
+    if (resultType.length === 0) return res.json({ error: `not found`, message: `Type with this id (id: ${type_id}) doesn't exists` });
 
     const sql = `INSERT INTO pokemon_type (pokemon_id, type_id) values (?, ?)`;
+    if (type_id2 != null) {
+
+        if (resultControll.length === 1) return res.json({ error: `bad request`, message: `you can't add a second type for this pokemon (id: ${pokemonId}) beacous it already has one type` });
+        if (typeof type_id2 !== `number`) return res.json({ error: `bad request`, message: `the type of type_id2 should be a number` });
+        if (type_id2 === type_id) return res.json({ error: `bad request`, message: `type_id2 can't be the same as type_id` });
+
+        const [resultType2] = await connection.query(sqlType, type_id2);
+        if (resultType2.length === 0) return res.json({ error: `not found`, message: `Type with this id (id: ${type_id2}) doesn't exists` });
+
+        await connection.query(sql, [pokemonId, type_id2]);
+    }
     await connection.query(sql, [pokemonId, type_id]);
 
-    res.json({
-        pokemonId,
-        type_id
-    });
+    const json = type_id2 == null ? { pokemonId, type_id } : { first_type: { pokemonId, type_id }, second_type: { pokemonId, type_id2 } };
+    res.json(json);
 };
 
 export const createPokemonGames = async (req, res) => {
@@ -424,11 +433,11 @@ export const createPokemonMoves = async (req, res) => {
 
     if (typeof learning_level === `string` || typeof learning_level === `boolean`) return res.json({ error: `bad request`, message: `The level should be a number` });
     if (
-            (learning_egg === false && learning_move_tutor === false && learning_mt === false && learning_mn === false) 
-            && 
-            (typeof learning_level !== `number` || learning_level < 1 || learning_level > 101)
-        ) 
-    return res.json({ error: `bad request`, message: `you have to insert the learning_level (higer than 0 and lower than 101) if all others are false` });
+        (learning_egg === false && learning_move_tutor === false && learning_mt === false && learning_mn === false)
+        &&
+        (typeof learning_level !== `number` || learning_level < 1 || learning_level > 101)
+    )
+        return res.json({ error: `bad request`, message: `you have to insert the learning_level (higer than 0 and lower than 101) if all others are false` });
 
     if (typeof learning_egg !== `boolean`) return res.json({ error: `bad request`, message: `Does it learn it from egg?` });
     if (typeof learning_move_tutor !== `boolean`) return res.json({ error: `bad request`, message: `Does it learn it from move tutor?` });
