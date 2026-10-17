@@ -3,13 +3,38 @@ import { notFoundError } from '../../errorFunctions.js';
 
 export const getPokemon = async (req, res) => {
 
-    const sql = `SELECT * FROM pokemon`;
+    const sqlPok = `SELECT * FROM pokemon`;
+    const [resultPok] = await connection.query(sqlPok);
+    if (resultPok.length === 0) return notFoundError(req, res, `pokemon`);
 
-    const [result] = await connection.query(sql);
+    const sqlPokType = `
+        SELECT
+            pt.*,
+            t.type
+        FROM pokemon_type pt
+        JOIN types t
+        on t.id = pt.type_id
+    `;
+    const [resultPokType] = await connection.query(sqlPokType);
 
-    if (result.length === 0) return notFoundError(req, res, `pokemon`);
+    for (let i = 0; i < resultPok.length; i++) {
 
-    res.send(result);
+        resultPok[i].types = [];
+
+        for (let j = 0; j < resultPokType.length; j++) {
+
+            if (resultPokType[j].pokemon_id === resultPok[i].id) {
+
+                resultPok[i].types.push(resultPokType[j].type)
+
+                if (resultPok[i].types.length === 2) break
+            }
+
+        }
+
+    }
+
+    res.send(resultPok);
 
 };
 
@@ -128,7 +153,7 @@ export const getPokemonById = async (req, res) => {
 export const getPokemonByName = async (req, res) => {
 
     const name = req.params.name;
-    if (typeof name === `number`) return res.json({error: `bad request`, message: `the name should be a string`})
+    if (typeof name === `number`) return res.json({ error: `bad request`, message: `the name should be a string` })
 
     const sql = `SELECT * FROM pokemon WHERE name = ?`;
     const sqlEvolution = `
@@ -298,7 +323,7 @@ export const updatePokemon = async (req, res) => {
     if (image.includes(`..`)) return res.json({ error: `body request error`, message: `the image file/name shouldn't includes '..'` });
     const regex = /\.\s*(?!png\b)\w+/i;
     if (regex.test(image)) return res.json({ error: `body request error`, message: `the image file/name should be '.png'` });
-    
+
     const sql = `
         UPDATE pokemon
         SET name = ?,
