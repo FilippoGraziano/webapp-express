@@ -19,6 +19,10 @@ export const createPokemon = async (req, res) => {
     if (typeof name !== `string`) return res.status(400).json({ error: `body request error`, message: `the name should be a string` });
     if (name.length < 3) return res.status(400).json({ error: `body request error`, message: `you have to insert a longest name` });
 
+    const sqlPokemon = `SELECT * FROM pokemon WHERE name = ?`;
+    const [[resultPokemon]] = await connection.query(sqlPokemon, name);
+    if (resultPokemon !== undefined) return res.status(400).json({ error: `body request error`, message: `pokemon with this name (name: ${name} already exist)` })
+
     if (height === undefined) return res.status(400).json({ error: `body request error`, message: `you have to insert the height of the pokemon` });
     if (typeof height !== `number`) return res.status(400).json({ error: `body request error`, message: `the height should be a number` });
     if (height < 0.1) return res.status(400).json({ error: `body request error`, message: `the height should be bigger than 0` });
@@ -30,6 +34,10 @@ export const createPokemon = async (req, res) => {
     if (n_international === undefined) return res.status(400).json({ error: `body request error`, message: `you have to insert the international number of the pokemon` });
     if (typeof n_international !== `number`) return res.status(400).json({ error: `body request error`, message: `the n_internationl should be a number` });
     if (n_international < 1) return res.status(400).json({ error: `body request error`, message: `the n_internationl should be bigger than 0` });
+
+    const sqln_international = `SELECT * FROM pokemon WHERE n_international = ?`;
+    const [resultn_international] = await connection.query(sqln_international, n_international);
+    if (resultn_international.length !== 0) return res.status(400).json({ error: `body request error`, message: `already exist a pokemon with this international pokedex number, you have to choose another one` })
 
     if (generation === undefined) return res.status(400).json({ error: `body request error`, message: `you have to insert the generation of the pokemon` });
     if (typeof generation !== `number`) return res.status(400).json({ error: `body request error`, message: `the generation should be a number` });
@@ -52,12 +60,16 @@ export const createPokemon = async (req, res) => {
 
     if (image === undefined) return res.status(400).json({ error: `body request error`, message: `you have to insert the image of the pokemon` });
     if (image.includes(`..`)) return res.status(400).json({ error: `body request error`, message: `the image file/name shouldn't includes '..'` });
-    const regex = /\.\s*(?!png\b)\w+/i;
-    if (regex.test(image)) return res.status(400).json({ error: `body request error`, message: `the image file/name should be '.png'` });
+    const regexNoPng = /\.\s*(?!png\b)\w+/i;
+    const regexYesPng = /\.\s*(?=png\b)\w+/i;
+    if (regexNoPng.test(image)) return res.status(400).json({ error: `body request error`, message: `the image file/name should be '.png'` });
+    if (!regexYesPng.test(image)) return res.status(400).json({ error: `body request error`, message: `the image file/name should be '.png'` });
 
-    const sql = `
-        INSERT INTO pokemon ( name, height, weight, n_international, generation, description, male, female, image ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )
-    `
+    const sqlImagePok = `SELECT * FROM pokemon WHERE image = ?`;
+    const [resultImagePok] = await connection.query(sqlImagePok, image);
+    if (resultImagePok.length !== 0) return res.status(400).json({ error: `body request error`, message: `already exist a pokemon with this image, you have to choose another one` })
+
+    const sql = `INSERT INTO pokemon ( name, height, weight, n_international, generation, description, male, female, image ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`
     const [result] = await connection.query(sql, [
         name,
         height,
