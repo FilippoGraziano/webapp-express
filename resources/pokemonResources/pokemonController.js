@@ -162,7 +162,7 @@ export const getPokemonByName = async (req, res) => {
             e.evo_method,
             i.name item_name,
             pe.name evo_name,
-            pe.image evo_image
+            pe.n_international evo_pokedex_num
         FROM evolutions e
         JOIN pokemon p
         on p.id = e.pokemon_id 
